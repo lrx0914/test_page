@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>可交互抽屉原型 - 标签补全版</title>
+    <title>抽屉交互 - 商家实操行动版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .custom-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -21,8 +21,8 @@
     <!-- 全屏半透明遮罩背景 -->
     <div class="fixed inset-0 bg-black/40 flex justify-end z-50">
         
-        <!-- 右侧划出抽屉 -->
-        <div class="w-[1000px] bg-white h-full shadow-2xl flex flex-col">
+        <!-- 右侧划出抽屉 (宽幅 1000px) -->
+        <div class="w-[1000px] bg-white h-full shadow-2xl flex flex-col transform transition-transform duration-300 translate-x-0">
             
             <!-- 1. 抽屉头部 -->
             <div class="px-6 py-4 flex items-center justify-between border-b border-[#E5E6EB] shrink-0">
@@ -49,7 +49,8 @@
                 <div class="w-[240px] border-r border-[#E5E6EB] flex flex-col shrink-0">
                     <div class="px-4 py-3 border-b border-[#E5E6EB] bg-[#F7F8FA] flex justify-between items-center">
                         <span class="text-[12px] text-[#4E5969] font-medium">负向词云标签</span>
-                        <span class="text-[12px] text-[#86909C]">频次</span>
+                        <!-- 需求4：频次 -> 条数 -->
+                        <span class="text-[12px] text-[#86909C]">条数</span>
                     </div>
                     <div id="tags-container" class="flex-1 overflow-y-auto custom-scroll py-1">
                         <!-- 动态渲染标签 -->
@@ -59,7 +60,7 @@
                 <!-- 右侧：AI结论与明细表格 -->
                 <div class="flex-1 flex flex-col relative overflow-hidden">
                     
-                    <!-- AI 智能分析条 -->
+                    <!-- AI 智能分析条 (行动建议主导) -->
                     <div class="m-5 mb-0 p-3.5 bg-gradient-to-r from-[#F4F8FF] to-[#F9FBFF] border border-[#DCEBFF] rounded-lg shrink-0 flex gap-3 shadow-sm">
                         <div class="shrink-0 mt-0.5">
                             <span class="bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-[11px] font-bold px-1.5 py-0.5 rounded shadow-sm">AI 归因提要</span>
@@ -82,8 +83,9 @@
                             <thead class="bg-[#F7F8FA] text-[#86909C] sticky top-0 z-10">
                                 <tr>
                                     <th class="px-3 py-2.5 font-normal w-[15%] rounded-l-md">原声来源</th>
-                                    <th class="px-3 py-2.5 font-normal w-[55%]">客诉原声 / 评价内容</th>
-                                    <th class="px-3 py-2.5 font-normal w-[15%]">预测归类</th>
+                                    <th class="px-3 py-2.5 font-normal w-[50%]">客诉原声 / 评价内容</th>
+                                    <!-- 需求2：预测归类 -> 查看完整对话 -->
+                                    <th class="px-3 py-2.5 font-normal w-[20%]">查看完整对话</th>
                                     <th class="px-3 py-2.5 font-normal w-[15%] rounded-r-md text-right">操作指引</th>
                                 </tr>
                             </thead>
@@ -101,58 +103,58 @@
     <script>
         // ------------------ 数据中心 ------------------
         const mockData = {
-            // 顶部卡片数据
+            // 需求3：加入GMV信息
             cards: [
-                { id: 'c1', name: '商品问题 - 质量差', value: 84, trend: '↑ 14.5%', trendColor: 'text-[#F53F3F]' },
-                { id: 'c2', name: '用户权益 - 无运费险', value: 25, trend: '↑ 8.2%', trendColor: 'text-[#F53F3F]' },
-                { id: 'c3', name: '交付时效 - 发货慢', value: 12, trend: '↓ 3.4%', trendColor: 'text-[#00B42A]' },
-                { id: 'c4', name: '商品问题 - 缺货', value: 5, trend: '持平', trendColor: 'text-[#86909C]' }
+                { id: 'c1', name: '商品问题 - 质量差', value: 84, gmv: '3.2万', trend: '↑ 14.5%', trendColor: 'text-[#F53F3F]' },
+                { id: 'c2', name: '用户权益 - 无运费险', value: 25, gmv: '8,400', trend: '↑ 8.2%', trendColor: 'text-[#F53F3F]' },
+                { id: 'c3', name: '交付时效 - 发货慢', value: 12, gmv: '5,200', trend: '↓ 3.4%', trendColor: 'text-[#00B42A]' },
+                { id: 'c4', name: '商品问题 - 缺货', value: 5, gmv: '1,800', trend: '持平', trendColor: 'text-[#86909C]' }
             ],
-            // 补全后的丰富标签树
+            // 需求1：去除所有高危/高频标签，保持清爽
             tags: {
                 'c1': [
-                    { id: 't1_1', name: '做工粗糙线头多', count: 28, tag: '' },
-                    { id: 't1_2', name: '衣服太透/外观缺陷', count: 24, tag: '' },
-                    { id: 't1_3', name: '有异味', count: 18, tag: '高危' },
-                    { id: 't1_4', name: '版型不对称', count: 15, tag: '' },
-                    { id: 't1_5', name: '勾丝抽丝', count: 14, tag: '' },
-                    { id: 't1_6', name: '有污渍', count: 9, tag: '' },
-                    { id: 't1_7', name: '开线脱线破洞', count: 8, tag: '' },
-                    { id: 't1_8', name: '掉色严重', count: 6, tag: '' },
-                    { id: 't1_9', name: '面料扎人', count: 5, tag: '' },
-                    { id: 't1_10', name: '无吊牌/疑似穿过', count: 4, tag: '' }
+                    { id: 't1_1', name: '做工粗糙线头多', count: 28 },
+                    { id: 't1_2', name: '衣服太透/外观缺陷', count: 24 },
+                    { id: 't1_3', name: '有异味', count: 18 },
+                    { id: 't1_4', name: '版型不对称', count: 15 },
+                    { id: 't1_5', name: '勾丝抽丝', count: 14 },
+                    { id: 't1_6', name: '有污渍', count: 9 },
+                    { id: 't1_7', name: '开线脱线破洞', count: 8 },
+                    { id: 't1_8', name: '掉色严重', count: 6 },
+                    { id: 't1_9', name: '面料扎人', count: 5 },
+                    { id: 't1_10', name: '无吊牌/疑似穿过', count: 4 }
                 ],
                 'c2': [
-                    { id: 't2_1', name: '暂无/不含运费险', count: 15, tag: '高频' },
-                    { id: 't2_2', name: '无赠送运费险', count: 7, tag: '' },
-                    { id: 't2_3', name: '没有险吗', count: 3, tag: '' }
+                    { id: 't2_1', name: '暂无/不含运费险', count: 15 },
+                    { id: 't2_2', name: '无赠送运费险', count: 7 },
+                    { id: 't2_3', name: '没有险吗', count: 3 }
                 ]
             },
-            // 特定标签的精编数据
+            // 需求5：提要融入E列分类词，且重注商家建议动作
             content: {
                 't1_1': {
-                    summary: `当前标签 <strong class="text-[#1D2129]">【做工粗糙线头多】</strong> 严重拉低商品留存率。用户高频反馈：<span class="text-[#F53F3F]">“到处都是线头”、“接头好多”</span>。建议立即通知质检仓，对同批次T恤进行线头抽检复核，并配置飞鸽 <a href="#" class="text-bd-blue hover:underline">轻微瑕疵补偿券策略</a>。`,
+                    summary: `当前标签【做工粗糙线头多】属核心 <strong class="text-[#1D2129]">做工瑕疵</strong> 痛点，占比极高。建议行动：1. 立即联动供应链质检仓，对同批次大货加强剪线头等外观出厂抽检；2. 针对已售异常订单，建议配置飞鸽 <a href="#" class="text-bd-blue hover:underline">轻微瑕疵补偿券策略</a>，低成本拦拦截直接退款。`,
                     rows: [
-                        { source: '飞鸽咨询', sourceStyle: 'text-blue-600 bg-blue-50 border-blue-100', text: '衣服上面有<strong class="text-[#F53F3F] bg-red-50 px-0.5 rounded">多处线头</strong>', category: '做工瑕疵', action: '去赔付' },
-                        { source: '商品差评', sourceStyle: 'text-red-600 bg-red-50 border-red-100', text: '<strong class="text-[#F53F3F] bg-red-50 px-0.5 rounded">质量不是很好</strong>，<strong class="text-[#F53F3F] bg-red-50 px-0.5 rounded">到处都是线头</strong>', category: '做工瑕疵', action: '去回复' },
-                        { source: '退款留言', sourceStyle: 'text-orange-600 bg-orange-50 border-orange-100', text: '<strong class="text-[#F53F3F] bg-red-50 px-0.5 rounded">做工太差了</strong>', category: '做工瑕疵', action: '已完结', actionStyle: 'text-gray-400 cursor-not-allowed' },
-                        { source: '飞鸽咨询', sourceStyle: 'text-blue-600 bg-blue-50 border-blue-100', text: '好多地方有问题，<strong class="text-[#F53F3F] bg-red-50 px-0.5 rounded">接头好多</strong>', category: '做工瑕疵', action: '去赔付' }
+                        { source: '飞鸽咨询', sourceStyle: 'text-blue-600 bg-blue-50 border-blue-100', text: '衣服上面有<strong class="text-[#F53F3F] bg-red-50 px-0.5 rounded">多处线头</strong>', action: '去赔付' },
+                        { source: '商品差评', sourceStyle: 'text-red-600 bg-red-50 border-red-100', text: '<strong class="text-[#F53F3F] bg-red-50 px-0.5 rounded">质量不是很好</strong>，<strong class="text-[#F53F3F] bg-red-50 px-0.5 rounded">到处都是线头</strong>', action: '去回复' },
+                        { source: '退款留言', sourceStyle: 'text-orange-600 bg-orange-50 border-orange-100', text: '<strong class="text-[#F53F3F] bg-red-50 px-0.5 rounded">做工太差了</strong>', action: '已完结', actionStyle: 'text-gray-400 cursor-not-allowed' },
+                        { source: '飞鸽咨询', sourceStyle: 'text-blue-600 bg-blue-50 border-blue-100', text: '好多地方有问题，<strong class="text-[#F53F3F] bg-red-50 px-0.5 rounded">接头好多</strong>', action: '去赔付' }
                     ]
                 },
                 't1_2': {
-                    summary: `当前标签 <strong class="text-[#1D2129]">【衣服太透/外观缺陷】</strong> 退单率持续上升。多名买家反映实物 <span class="text-[#F53F3F]">“太透穿不成”、“有破洞”</span>。建议立即排查白/浅色SKU面料克重，优化详情页“建议搭配打底”等文案。`,
+                    summary: `当前标签【衣服太透/外观缺陷】属典型 <strong class="text-[#1D2129]">外观缺陷与面料问题</strong>。买家反映实物太透穿不成。建议行动：1. 紧急排查白/浅色SKU面料克重，考虑更换面料批次；2. 立即优化详情页，增加“建议搭配浅色打底”等防坑文案，降低期望偏差引发的退货。`,
                     rows: [
-                        { source: '商品差评', sourceStyle: 'text-red-600 bg-red-50 border-red-100', text: '这件白色亚麻裤<strong class="text-[#F53F3F] bg-red-50 px-0.5 rounded">特别透根本穿不成</strong>！', category: '外观缺陷', action: '去回复' },
-                        { source: '退款留言', sourceStyle: 'text-orange-600 bg-orange-50 border-orange-100', text: '衣服<strong class="text-[#F53F3F] bg-red-50 px-0.5 rounded">异味儿特别大</strong>，而且衣服上是脏的，<strong class="text-[#F53F3F] bg-red-50 px-0.5 rounded">还特别透</strong>', category: '外观缺陷', action: '已完结', actionStyle: 'text-gray-400 cursor-not-allowed' },
-                        { source: '飞鸽咨询', sourceStyle: 'text-blue-600 bg-blue-50 border-blue-100', text: '衣服有质量问题，<strong class="text-[#F53F3F] bg-red-50 px-0.5 rounded">线散了要补</strong>', category: '外观缺陷', action: '去赔付' }
+                        { source: '商品差评', sourceStyle: 'text-red-600 bg-red-50 border-red-100', text: '这件白色亚麻裤<strong class="text-[#F53F3F] bg-red-50 px-0.5 rounded">特别透根本穿不成</strong>！', action: '去回复' },
+                        { source: '退款留言', sourceStyle: 'text-orange-600 bg-orange-50 border-orange-100', text: '衣服<strong class="text-[#F53F3F] bg-red-50 px-0.5 rounded">异味儿特别大</strong>，而且衣服上是脏的，<strong class="text-[#F53F3F] bg-red-50 px-0.5 rounded">还特别透</strong>', action: '已完结', actionStyle: 'text-gray-400 cursor-not-allowed' },
+                        { source: '飞鸽咨询', sourceStyle: 'text-blue-600 bg-blue-50 border-blue-100', text: '衣服有质量问题，<strong class="text-[#F53F3F] bg-red-50 px-0.5 rounded">线散了要补</strong>', action: '去赔付' }
                     ]
                 },
                 't2_1': {
-                    summary: `当前标签 <strong class="text-[#1D2129]">【暂无/不含运费险】</strong> 导致大量售前流失与退款纠纷。买家咨询高频词：<span class="text-[#F53F3F]">“有运费险吗”、“没有退了”</span>。该品类竞争激烈，缺乏运费险严重影响转化，建议一键 <a href="#" class="text-bd-blue hover:underline">配置商品运费险</a>。`,
+                    summary: `当前标签【暂无/不含运费险】严重影响下单转化与售后体验，产生大量流失。建议行动：服饰类目竞争激烈且退换率较高，建议一键前往营销中心 <a href="#" class="text-bd-blue hover:underline">为该商品配置运费险</a>，经测算可显著提升静默下单率并减少客服扯皮成本。`,
                     rows: [
-                        { source: '飞鸽咨询', sourceStyle: 'text-blue-600 bg-blue-50 border-blue-100', text: '<span class="text-gray-400">买家:</span> <strong class="text-[#F53F3F] bg-red-50 px-0.5 rounded">没有运费险吗？</strong><br><span class="text-gray-400 mt-1 inline-block">客服:</span> 这款暂不含运费险哦～', category: '无运费险', action: '去修改权益' },
-                        { source: '飞鸽咨询', sourceStyle: 'text-blue-600 bg-blue-50 border-blue-100', text: '<span class="text-gray-400">买家:</span> 消费者问<strong class="text-[#F53F3F] bg-red-50 px-0.5 rounded">退货有运费险吗</strong><br><span class="text-gray-400 mt-1 inline-block">客服:</span> 商家说没有。', category: '无运费险', action: '去修改权益' },
-                        { source: '退款留言', sourceStyle: 'text-orange-600 bg-orange-50 border-orange-100', text: '我不懂，就是说<strong class="text-[#F53F3F] bg-red-50 px-0.5 rounded">没运费险</strong>，不买了。', category: '无运费险', action: '已完结', actionStyle: 'text-gray-400 cursor-not-allowed' }
+                        { source: '飞鸽咨询', sourceStyle: 'text-blue-600 bg-blue-50 border-blue-100', text: '<span class="text-gray-400">买家:</span> <strong class="text-[#F53F3F] bg-red-50 px-0.5 rounded">没有运费险吗？</strong><br><span class="text-gray-400 mt-1 inline-block">客服:</span> 这款暂不含运费险哦～', action: '去修改权益' },
+                        { source: '飞鸽咨询', sourceStyle: 'text-blue-600 bg-blue-50 border-blue-100', text: '<span class="text-gray-400">买家:</span> 消费者问<strong class="text-[#F53F3F] bg-red-50 px-0.5 rounded">退货有运费险吗</strong><br><span class="text-gray-400 mt-1 inline-block">客服:</span> 商家说没有。', action: '去修改权益' },
+                        { source: '退款留言', sourceStyle: 'text-orange-600 bg-orange-50 border-orange-100', text: '我不懂，就是说<strong class="text-[#F53F3F] bg-red-50 px-0.5 rounded">没运费险</strong>，不买了。', action: '已完结', actionStyle: 'text-gray-400 cursor-not-allowed' }
                     ]
                 }
             }
@@ -173,10 +175,18 @@
                     <div onclick="handleCardClick('${card.id}')" 
                          class="${isActive ? 'bg-bd-blue-light border-2 border-bd-blue shadow-sm relative' : 'bg-white border border-[#E5E6EB] hover:shadow-sm group'} p-3 rounded-md cursor-pointer transition">
                         ${isActive ? '<div class="absolute -bottom-[6px] left-1/2 transform -translate-x-1/2 w-2.5 h-2.5 bg-white border-b-2 border-r-2 border-bd-blue rotate-45"></div>' : ''}
+                        
                         <div class="text-[12px] ${isActive ? 'text-bd-blue font-medium' : 'text-[#4E5969] group-hover:text-bd-blue'} mb-1">${card.name}</div>
+                        
                         <div class="flex items-end justify-between">
-                            <div class="text-[20px] font-bold ${isActive ? 'text-bd-blue' : ''}">${card.value}</div>
+                            <div><span class="text-[20px] font-bold ${isActive ? 'text-bd-blue' : 'text-gray-900'}">${card.value}</span><span class="text-[12px] ${isActive ? 'text-blue-400' : 'text-gray-400'} ml-1">条</span></div>
                             <div class="text-[12px] ${card.trendColor} ${isActive ? 'font-medium' : ''}">${card.trend}</div>
+                        </div>
+                        
+                        <!-- 需求3：新增退款GMV展示 -->
+                        <div class="mt-2 pt-2 border-t ${isActive ? 'border-blue-200' : 'border-gray-100'} flex items-center justify-between text-[11px]">
+                            <span class="${isActive ? 'text-blue-500' : 'text-gray-400'}">退款GMV</span>
+                            <span class="font-medium ${isActive ? 'text-bd-blue' : 'text-gray-700'}">¥${card.gmv}</span>
                         </div>
                     </div>
                 `;
@@ -194,13 +204,12 @@
 
             container.innerHTML = tags.map(tag => {
                 const isActive = tag.id === currentTagId;
-                const tagHtml = tag.tag ? `<span class="ml-1 ${tag.tag==='高危'?'bg-red-100 text-red-600':'bg-orange-100 text-orange-600'} text-[10px] px-1 rounded scale-90">${tag.tag}</span>` : '';
                 return `
                     <div onclick="handleTagClick('${tag.id}')" 
                          class="px-4 py-3 cursor-pointer flex justify-between items-center transition group 
                          ${isActive ? 'bg-bd-blue-light border-l-2 border-bd-blue' : 'border-l-2 border-transparent hover:bg-[#F2F3F5]'}">
                         <span class="text-[13px] flex items-center ${isActive ? 'font-bold text-bd-blue' : 'text-[#1D2129] group-hover:text-bd-blue'}">
-                            ${tag.name} ${tagHtml}
+                            ${tag.name}
                         </span>
                         <span class="text-[13px] ${isActive ? 'font-bold text-bd-blue' : 'text-[#4E5969]'}">${tag.count}</span>
                     </div>
@@ -214,26 +223,23 @@
         function renderContent() {
             if (!currentTagId) return;
             
-            // 寻找预设数据，如果没有，则动态生成兜底数据！
             let data = mockData.content[currentTagId];
             if (!data) {
                 const currentTagObj = mockData.tags[currentCardId].find(t => t.id === currentTagId);
                 const tagName = currentTagObj ? currentTagObj.name : '未知标签';
                 
                 data = {
-                    summary: `当前标签 <strong class="text-[#1D2129]">【${tagName}】</strong> 原声提及频次较高。大模型已自动捕获相关客诉，建议重点关注对应批次商品或履约链路，避免引发批量差评与退款。`,
+                    summary: `当前标签【${tagName}】原声提及频次较高。大模型已自动捕获相关客诉，建议重点关注对应批次商品外观或履约链路，通过飞鸽配置针对性售后安抚，避免引发批量差评与退款。`,
                     rows: [
-                        { source: '退款留言', sourceStyle: 'text-orange-600 bg-orange-50 border-orange-100', text: `这商品竟然<strong class="text-[#F53F3F] bg-red-50 px-0.5 rounded">${tagName}</strong>，没法穿，要求退款！`, category: 'AI聚类提取', action: '去赔付' },
-                        { source: '商品差评', sourceStyle: 'text-red-600 bg-red-50 border-red-100', text: `质量堪忧，存在严重的<strong class="text-[#F53F3F] bg-red-50 px-0.5 rounded">${tagName}</strong>问题，避雷避雷！`, category: 'AI聚类提取', action: '去回复' },
-                        { source: '飞鸽咨询', sourceStyle: 'text-blue-600 bg-blue-50 border-blue-100', text: `<span class="text-gray-400">买家:</span> 收到货发现<strong class="text-[#F53F3F] bg-red-50 px-0.5 rounded">${tagName}</strong>，怎么办啊？`, category: 'AI聚类提取', action: '去建单' }
+                        { source: '退款留言', sourceStyle: 'text-orange-600 bg-orange-50 border-orange-100', text: `这商品竟然<strong class="text-[#F53F3F] bg-red-50 px-0.5 rounded">${tagName}</strong>，没法穿，要求退款！`, action: '去赔付' },
+                        { source: '商品差评', sourceStyle: 'text-red-600 bg-red-50 border-red-100', text: `质量堪忧，存在严重的<strong class="text-[#F53F3F] bg-red-50 px-0.5 rounded">${tagName}</strong>问题，避雷避雷！`, action: '去回复' },
+                        { source: '飞鸽咨询', sourceStyle: 'text-blue-600 bg-blue-50 border-blue-100', text: `<span class="text-gray-400">买家:</span> 收到货发现<strong class="text-[#F53F3F] bg-red-50 px-0.5 rounded">${tagName}</strong>，怎么办啊？`, action: '去建单' }
                     ]
                 };
             }
 
-            // 更新 AI 摘要
             document.getElementById('ai-summary').innerHTML = data.summary;
 
-            // 更新表格
             document.getElementById('table-body').innerHTML = data.rows.map(row => `
                 <tr class="hover:bg-[#F7F8FA] transition group">
                     <td class="px-3 py-3.5 align-top">
@@ -242,7 +248,13 @@
                     <td class="px-3 py-3.5 align-top leading-relaxed pr-6 text-[#1D2129]">
                         ${row.text}
                     </td>
-                    <td class="px-3 py-3.5 align-top text-[#86909C] text-[12px]">${row.category}</td>
+                    <!-- 需求2：预测归类 -> 飞鸽对话明细 跳转链接 -->
+                    <td class="px-3 py-3.5 align-top text-[#86909C] text-[12px]">
+                        <a href="#" class="text-bd-blue hover:text-blue-700 hover:underline flex items-center">
+                            <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                            飞鸽对话明细
+                        </a>
+                    </td>
                     <td class="px-3 py-3.5 align-top text-right">
                         <a href="#" class="${row.actionStyle ? row.actionStyle : 'text-bd-blue hover:text-blue-700'} text-[12px]">${row.action}</a>
                     </td>
